@@ -16,7 +16,6 @@ if ( ! defined( 'ABSPATH' ) || ! class_exists( 'WooCommerce' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-include_once "vendor/autoload.php";
 /**
  * стараемся не мусорить переменными в глобале поэтому статик
  */
