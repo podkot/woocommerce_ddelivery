@@ -1,5 +1,6 @@
 {
     "name": "ipolh/woocommerce_ddelivery",
+    "type": "wordpress-plugin",
     "authors": [
         {
             "name": "dmz9",
