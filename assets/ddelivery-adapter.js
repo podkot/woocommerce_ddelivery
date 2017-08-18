@@ -12,7 +12,7 @@
                     'fontSize': '0.75em'
                 }
             }),
-            $eventbus: $({}).on('myCustomEvent', function (event, data) {
+            $eventbus: $(document).on('ddelivery', function (event, data) {
                 switch (data.name) {
                     case 'init':
                         controller.init();
@@ -60,7 +60,7 @@
                     console.groupEnd();
                     console.groupEnd(event);
                 }
-                this.$eventbus.trigger('myCustomEvent', {
+                this.$eventbus.trigger('ddelivery', {
                     'name': event,
                     'data': data
                 })
@@ -127,9 +127,9 @@
                 var _ = this;
                 var params = settings.ddeliveryParams;
                 var urlParams = {};
-                urlParams['to_street'] = '';
-                urlParams['to_home'] = '';
-                urlParams['to_flat'] = '';
+                urlParams['to_street'] = settings.toStreet || '';
+                urlParams['to_home'] = settings.toHome || '';
+                urlParams['to_flat'] = settings.toFlat || '';
                 params.url = controller.url + '?' + $.param(urlParams);
                 DDeliveryModule.init(params, {
                     open: function () {

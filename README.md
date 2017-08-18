@@ -1,4 +1,4 @@
-Установка плагина (только через composer)
+Установка плагина (только через composer, для [bedrock](https://roots.io/bedrock/)-подобных конфигураций):
 
 0. Добавить в composer.json/repositories:
 ```
