@@ -12,21 +12,21 @@ class Core {
 	const SESSION_FIELD_SDK_ID = 'ddelivery_order_sdk_id';
 	const SESSION_FIELD_UPLOAD_ERRORS = 'ddelivery_sdk_errors';
 	const ORDER_FIELD_DDELIVERY_ID = 'ddelivery_order_id';
-	
+
 	public static function init() {
 		$instance = new self();
 		$instance->_init();
 	}
-	
+
 	private function _init() {
-		
+
 		if ( ! Helper::woocommerceActive() ) {
 			return false;
 		}
-		
+
 		// инициализация метода доставки
 		$this->registerShipping();
-		
+
 		if ( ! is_admin() ) {
 			// регистрация роутинга
 			add_action( 'rest_api_init',
@@ -38,18 +38,18 @@ class Core {
 				$wc->shipping()
 				   ->calculate_shipping_for_package( DDeliveryShipping::DELIVERY_ID );
 			} );
-		
+
 		add_action( 'woocommerce_before_order_itemmeta',
 			function ( $orderId ) {
 				Helper::showUploadErrorsIfAny();
 				Helper::dropUploadErrors();
-				
+
 				return $orderId;
 			} );
-		
+
 		$updateCallback = array( Controller::class, 'actionOrderUpdate' );
 		$createCallback = array( Controller::class, 'actionOrderCreate' );
-		
+
 		// first register with createCallback, then try to send with updateCallback if status match with settings
 		add_action( 'woocommerce_thankyou',
 		            $createCallback,
@@ -60,7 +60,7 @@ class Core {
 		            100,
 		            1 );
 		// status change hooks
-		
+
 		$statuses = Helper::createContainer()
 		                  ->getAdapter()
 		                  ->getCmsOrderStatusList();
@@ -72,10 +72,10 @@ class Core {
 			            10,
 			            1 );
 		}
-		
+
 		return true;
 	}
-	
+
 	private function registerShipping() {
 		add_filter( 'woocommerce_shipping_methods',
 			function ( $deliveryMethods ) {
@@ -84,7 +84,8 @@ class Core {
 					wp_enqueue_script( self::SCRIPT_HANDLE,
 					                   Helper::getAssetUrl( 'ddelivery-adapter.js' ),
 					                   array( 'jquery' ) );
-					
+					$customer_id = get_current_user_id();
+
 					// прокидывание настроек на фронт.
 					$settings   = array(
 						'token'           => Router::buildRestUrl( 'generateSDKToken' ),
@@ -98,23 +99,26 @@ class Core {
 						'ddeliveryParams' => array(
 							'height' => 500
 						),
-						'debugMode'       => self::isDebug()
+						'debugMode'       => self::isDebug(),
+						'toStreet'        => get_user_meta( $customer_id, 'billing_address_1', true ),
+						'toHome'          => get_user_meta( $customer_id, 'billing_house',     true ),
+						'toFlat'          => get_user_meta( $customer_id, 'billing_flat',      true ),
 					);
 					$jsSettings = json_encode( $settings );
 					// инлайн данные о заказе и т.п.
 					wp_add_inline_script( self::SCRIPT_HANDLE,
 					                      "var woocommerce_ddelivery_settings = $jsSettings" );
 				}
-				
+
 				return DDeliveryShipping::addShippingToFrontend( $deliveryMethods );
 			} );
 	}
-	
+
 	private static function isDebug() {
-		
+
 		$group                       = DDeliveryShipping::getOptionsGroup();
 		$woocommerceShippingSettings = get_option( $group );
-		
+
 		return ( DDeliveryShipping::IS_DEBUG_DEFAULT_NO != (string) $woocommerceShippingSettings[ DDeliveryShipping::IS_DEBUG_FIELD ] );
 	}
 }
