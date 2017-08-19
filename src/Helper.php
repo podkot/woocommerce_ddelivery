@@ -53,7 +53,7 @@ class Helper {
 					'width'    => ! empty( $data->get_width() )  ? $data->get_width()  : 10,
 					'height'   => ! empty( $data->get_height() ) ? $data->get_height() : 10,
 					'length'   => ! empty( $data->get_length() ) ? $data->get_length() : 10,
-					'weight'   => ! empty( $data->get_weight() ) ? $data->get_weight() : 10
+					'weight'   => ! empty( $data->get_weight() ) ? $data->get_weight() : 1
 				];
 			}
 		}
