@@ -50,16 +50,7 @@ class Core {
 		$updateCallback = array( Controller::class, 'actionOrderUpdate' );
 		$createCallback = array( Controller::class, 'actionOrderCreate' );
 
-		// first register with createCallback, then try to send with updateCallback if status match with settings
-		add_action( 'woocommerce_thankyou',
-		            $createCallback,
-		            10,
-		            1 );
-		add_action( 'woocommerce_thankyou',
-		            $updateCallback,
-		            100,
-		            1 );
-		// status change hooks
+		add_action( 'woocommerce_checkout_order_processed', $createCallback, 10, 1 );
 
 		add_action( 'init', function() use( $updateCallback ) {
 			$statuses = Helper::createContainer()
