@@ -61,17 +61,19 @@ class Core {
 		            1 );
 		// status change hooks
 
-		$statuses = Helper::createContainer()
-		                  ->getAdapter()
-		                  ->getCmsOrderStatusList();
-		$statuses = array_keys( $statuses );
-		foreach ( $statuses as $status ) {
-			$action = "woocommerce_order_status_$status";
-			add_action( $action,
-			            $updateCallback,
-			            10,
-			            1 );
-		}
+		add_action( 'init', function() use( $updateCallback ) {
+			$statuses = Helper::createContainer()
+							->getAdapter()
+							->getCmsOrderStatusList();
+			$statuses = array_keys( $statuses );
+			foreach ( $statuses as $status ) {
+				$action = "woocommerce_order_status_$status";
+				add_action( $action,
+							$updateCallback,
+							10,
+							1 );
+			}
+		} );
 
 		return true;
 	}
