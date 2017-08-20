@@ -11,16 +11,12 @@ use DDelivery\Storage\LogStorageInterface;
 class WPLogStorage implements LogStorageInterface
 {
 	private $logFilePath;
-	
+
 	public function __construct()
 	{
-		$this->logFilePath = rtrim(
-				dirname(dirname(__FILE__)),
-				'/\\'
-			) . DIRECTORY_SEPARATOR . 'log' . DIRECTORY_SEPARATOR . 'logstorage.log';
-
+		$this->logFilePath = $this->logFilePath = WC_LOG_DIR . 'ddelivery.log';
 	}
-	
+
 	/**
 	 * Создаем хранилище
 	 *
@@ -30,12 +26,12 @@ class WPLogStorage implements LogStorageInterface
 	{
 		return true;
 	}
-	
+
 	public function getAllLogs()
 	{
 		return file_get_contents($this->logFilePath);
 	}
-	
+
 	public function saveLog($content)
 	{
 		$formatted = date('Y-m-d h.m.s') . "\t" . (string)$content . "\r";
@@ -45,7 +41,7 @@ class WPLogStorage implements LogStorageInterface
 			FILE_APPEND
 		);
 	}
-	
+
 	/**
 	 * @return string
 	 */
@@ -53,7 +49,7 @@ class WPLogStorage implements LogStorageInterface
 	{
 		return null;
 	}
-	
+
 	public function deleteLogs()
 	{
 		@file_put_contents(
@@ -61,7 +57,7 @@ class WPLogStorage implements LogStorageInterface
 			''
 		);
 	}
-	
+
 	public function drop()
 	{
 		return true;
