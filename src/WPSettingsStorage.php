@@ -15,25 +15,14 @@ class WPSettingsStorage implements SettingStorageInterface {
 
 	public function save( $settings ) {
 		$group = DDeliveryShipping::getOptionsGroup();
-		$opts  = get_option( $group );
-		if ( ! isset( $opts['storage'] ) ) {
-			$opts['storage'] = array();
-		}
-		$opts['storage'] = $settings;
-
-		return update_option( $group,
-		                      $opts );
+		return update_option( $group, $settings );
 	}
 
 	public function getParam( $paramName ) {
 		$group = DDeliveryShipping::getOptionsGroup();
 		$opts  = get_option( $group );
-		if ( empty( $opts['storage'] ) ) {
-			$opts['storage'] = array();
-		}
-
-		return ( isset( $opts['storage'][ $paramName ] ) )
-			? $opts['storage'][ $paramName ]
+		return ( isset( $opts[ $paramName ] ) )
+			? $opts[ $paramName ]
 			: null;
 	}
 

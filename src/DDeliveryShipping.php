@@ -10,6 +10,7 @@ class DDeliveryShipping extends \WC_Shipping_Method {
 	const API_KEY_FIELD = 'apikey';
 	const IS_DEBUG_FIELD = 'is_debug';
 	const IS_DEBUG_DEFAULT_NO = 'no';
+	const STATUS_FIELD = WPAdapter::PARAM_STATUS_LIST;
 
 	/**
 	 * Constructor for your shipping class
@@ -49,19 +50,27 @@ class DDeliveryShipping extends \WC_Shipping_Method {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			self::API_KEY_FIELD  => array(
-				'title'       => __( 'Апи ключ' ),
+				'title'       => __( 'API ключ' ),
 				'type'        => 'text',
 				'description' => __( 'Ключ можно найти в личном кабинете DDelivery' ),
 				'default'     => '',
 				'desc_tip'    => true,
 			),
+			self::STATUS_FIELD  => array(
+				'title'       => __( 'Статус заказа для&nbsp;отправки' ),
+				'type'        => 'select',
+				'description' => __( 'при обновлении до выбранного статуса заказ передаётся в DDelivery и будет отображаться как черновик' ),
+				'options'     => Helper::createContainer()->getAdapter()->getCmsOrderStatusList(),
+				'default'     => 'processing',
+				'desc_tip'    => true,
+			),
 			self::IS_DEBUG_FIELD => array(
-				'title'       => __( 'Дебаг режим' ),
+				'title'       => __( 'Режим отладки' ),
 				'type'        => 'checkbox',
 				'description' => __( 'В консоли чекаута показываются отладочные сообщения' ),
 				'default'     => 'no',
 				'desc_tip'    => true,
-				'label'       => __( 'Включить дебаг' )
+				'label'       => __( 'Включить отладку' )
 			),
 		);
 	}
