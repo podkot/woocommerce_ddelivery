@@ -128,7 +128,7 @@
                 var params = settings.ddeliveryParams;
                 var urlParams = {};
                 urlParams['to_street'] = settings.toStreet || '';
-                urlParams['to_home'] = settings.toHome || '';
+                urlParams['to_house'] = settings.toHouse || '';
                 urlParams['to_flat'] = settings.toFlat || '';
                 params.url = controller.url + '?' + $.param(urlParams);
                 DDeliveryModule.init(params, {
