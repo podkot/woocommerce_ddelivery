@@ -158,8 +158,8 @@ class Controller {
 			$order->get_formatted_billing_full_name(),
 			$order->get_billing_phone(),
 			$order->get_billing_email(),
-			$order->get_total(),
-			''
+			$order->is_paid() ? 0 : $order->get_total(),
+			$order->post->post_excerpt
 		);
 		try {
 			$result = $business->onCmsChangeStatus( $toSend[0],
@@ -256,8 +256,8 @@ class Controller {
 		                                       $order->get_formatted_billing_full_name(),
 		                                       $order->get_billing_phone(),
 		                                       $order->get_billing_email(),
-		                                       $order->get_total(),
-		                                       '' );
+		                                       $order->is_paid() ? 0 : $order->get_total(),
+		                                       $order->post->post_excerpt );
 		if ( $result !== false ) {
 			$logger->saveLog( "DDelivery data: " . print_r( $result,
 			                                                1 ) );
