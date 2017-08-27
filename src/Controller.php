@@ -158,7 +158,7 @@ class Controller {
 			$order->get_formatted_billing_full_name(),
 			$order->get_billing_phone(),
 			$order->get_billing_email(),
-			$order->is_paid() ? 0 : $order->get_total(),
+			apply_filters( 'ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order ),
 			$order->post->post_excerpt
 		);
 		try {
@@ -256,7 +256,7 @@ class Controller {
 		                                       $order->get_formatted_billing_full_name(),
 		                                       $order->get_billing_phone(),
 		                                       $order->get_billing_email(),
-		                                       $order->is_paid() ? 0 : $order->get_total(),
+		                                       apply_filters( 'ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order ),
 		                                       $order->post->post_excerpt );
 		if ( $result !== false ) {
 			$logger->saveLog( "DDelivery data: " . print_r( $result,
