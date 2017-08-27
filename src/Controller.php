@@ -152,7 +152,7 @@ class Controller {
 		$logger->saveLog( "Sending order to DDelivery" );
 		$toSend = array(
 			$sdkId,
-			$orderId,
+			$order->get_order_number(),
 			Helper::stringToNumber( $order->get_payment_method() ),
 			$order->get_status(),
 			$order->get_formatted_billing_full_name(),
@@ -250,7 +250,7 @@ class Controller {
 
 		$logger->saveLog( "Sending order to DDelivery" );
 		$result = $business->onCmsOrderFinish( $sdkId,
-		                                       $orderId,
+		                                       $order->get_order_number(),
 		                                       Helper::stringToNumber( $order->get_payment_method() ),
 		                                       $order->get_status(),
 		                                       $order->get_formatted_billing_full_name(),
