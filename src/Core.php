@@ -94,7 +94,7 @@ class Core {
 						),
 						'debugMode'       => self::isDebug(),
 						'toStreet'        => get_user_meta( $customer_id, 'billing_address_1', true ),
-						'toHome'          => get_user_meta( $customer_id, 'billing_house',     true ),
+						'toHouse'         => get_user_meta( $customer_id, 'billing_house',     true ),
 						'toFlat'          => get_user_meta( $customer_id, 'billing_flat',      true ),
 					);
 					$jsSettings = json_encode( $settings );
