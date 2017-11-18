@@ -150,15 +150,26 @@ class Helper {
 		$orderId
 	) {
 		$fname = self::getLogFilePath();
-		$data  = @file_get_contents( $fname );
+		$data  = '';
+
+		if ( is_readable($fname) ) {
+			$data  = file_get_contents( $fname );
+		}
+
 		if ( empty( $data ) ) {
 			$errors = array();
 		} else {
 			$errors = unserialize( $data );
 		}
 		$errors[ $orderId ] = $error;
-		@file_put_contents( $fname,
-		                    serialize( $errors ) );
+
+		if ( !file_exists($fname) ) {
+			touch($fname);
+		}
+
+		if ( is_writable($fname) ) {
+			file_put_contents( $fname, serialize( $errors ) );
+		}
 	}
 
 	public static function getLogFilePath() {
@@ -167,7 +178,10 @@ class Helper {
 
 	public static function showUploadErrorsIfAny() {
 		$fname = self::getLogFilePath();
-		$data  = @file_get_contents( $fname );
+		if ( !is_readable($fname) ) {
+			return;
+		}
+		$data  = file_get_contents( $fname );
 		if ( empty( $data ) ) {
 			return;
 		}
