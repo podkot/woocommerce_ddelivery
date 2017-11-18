@@ -162,8 +162,7 @@ class Helper {
 	}
 
 	public static function getLogFilePath() {
-		return rtrim( dirname( dirname( __FILE__ ) ),
-		              '/\\' ) . DIRECTORY_SEPARATOR . 'log' . DIRECTORY_SEPARATOR . 'last-error.log';
+		return WC_LOG_DIR . 'ddelivery-last-error.log';
 	}
 
 	public static function showUploadErrorsIfAny() {
