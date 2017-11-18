@@ -181,8 +181,23 @@ class Controller
 			$logger->saveLog("Debug data: " . print_r($toSend, 1));
 
 			$message = wp_strip_all_tags($exception->getMessage());
+
+			if ( strpos( $message, 'ПВЗ' ) !== false ) {
+				$creation_data = $order->get_meta(Core::ORDER_FIELD_CREATION_DATA);
+
+				if ( $creation_data ) {
+					$creation_data = \unserialize( $creation_data );
+					$info = $creation_data['info'];
+
+					if ( $info ) {
+						$info = wp_strip_all_tags( $info );
+						$message .= " Информация о доставке: $info";
+					}
+				}
+			}
+
 			$order->add_order_note("Ошибка отправки заказа в DDelivery: $message");
-			$order->add_meta_data(Core::ORDER_FIELD_HAS_UPDATE_ERRORS, 1, true);
+			$order->add_meta_data(Core::ORDER_FIELD_LAST_UPDATE_ERROR, $message, true);
 			self::_saveOrder( $order );
 
 			Helper::addUploadError($exception->getMessage(), $orderId);
@@ -195,7 +210,7 @@ class Controller
 		} else if ($result > 0) {
 			$logger->saveLog("DDelivery order id : " . print_r($result, 1));
 			$order->add_meta_data(Core::ORDER_FIELD_DDELIVERY_ID, (int)$result, true);
-			$order->delete_meta_data(Core::ORDER_FIELD_HAS_UPDATE_ERRORS);
+			$order->delete_meta_data(Core::ORDER_FIELD_LAST_UPDATE_ERROR);
 			$order->add_order_note(
 				"Заказ отправлен в DDelivery: " .
 					"<a href=\"https://ddelivery.ru/cabinet/orders/${result}/view\">${result}</a>"
@@ -279,7 +294,7 @@ class Controller
 
 			$message = wp_strip_all_tags($exception->getMessage());
 			$order->add_order_note("Ошибка создания заказа в DDelivery: $message");
-			$order->add_meta_data(Core::ORDER_FIELD_HAS_CREATE_ERRORS, 1, true);
+			$order->add_meta_data(Core::ORDER_FIELD_LAST_CREATE_ERROR, $message, true);
 
 			self::_saveOrder( $order );
 
@@ -288,7 +303,8 @@ class Controller
 
 		if ($result !== false) {
 			$logger->saveLog("DDelivery data: " . print_r($result, 1));
-			$order->delete_meta_data(Core::ORDER_FIELD_HAS_CREATE_ERRORS);
+			$order->add_meta_data(Core::ORDER_FIELD_CREATION_DATA, \serialize($result), true);
+			$order->delete_meta_data(Core::ORDER_FIELD_LAST_CREATE_ERROR);
 			$order->add_order_note('Заказ создан в DDelivery');
 
 			self::_saveOrder( $order );
