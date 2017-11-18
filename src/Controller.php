@@ -11,7 +11,7 @@ class Controller {
 
 		$container = Helper::createContainer();
 		$container->getUi()
-		          ->render( $_REQUEST );
+				  ->render( $_REQUEST );
 		die();
 	}
 
@@ -25,17 +25,17 @@ class Controller {
 			: array();
 
 		$container       = Helper::createContainer( array(
-			                                            'form'     => $products,
-			                                            'discount' => (float) $discount
-		                                            ) );
+														'form'     => $products,
+														'discount' => (float) $discount
+													) );
 		$business        = $container->getBusiness();
 		$cartAndDiscount = $container->getAdapter()
-		                             ->getCartAndDiscount();
+									 ->getCartAndDiscount();
 		$token           = $business->renderModuleToken( $cartAndDiscount );
 
 		return array(
 			'url' => $container->getAdapter()
-			                   ->getSdkServer() . 'delivery/' . $token . '/index.json'
+							   ->getSdkServer() . 'delivery/' . $token . '/index.json'
 		);
 	}
 
@@ -86,7 +86,7 @@ class Controller {
 		$total = $session->get( 'shipping_method_counts', array());
 		foreach ( $total as $i => $whatever ) {
 			$session->set( 'shipping_for_package_' . $i,
-			               'fuck_you_woocommerce' );
+						   'fuck_you_woocommerce' );
 		}
 
 		$session->save_data();
@@ -100,7 +100,7 @@ class Controller {
 		$order->save();
 
 		return die( print_r( $order,
-		                     1 ) );
+							 1 ) );
 	}
 
 	/**
@@ -135,11 +135,10 @@ class Controller {
 				return $orderId;
 			}
 			$logger->saveLog( "Order $orderId has sdk id $sdkId" );
-			$ddeliveryId = $order->get_meta( Core::ORDER_FIELD_DDELIVERY_ID,
-			                                 false );
+			$ddeliveryId = $order->get_meta( Core::ORDER_FIELD_DDELIVERY_ID, false );
+
 			if ( $ddeliveryId !== false && ! empty( $ddeliveryId ) ) {
-				$logger->saveLog( "Order already uploaded, ddelivery id: " . print_r( $ddeliveryId,
-				                                                                      1 ) );
+				$logger->saveLog( "Order already uploaded, ddelivery id: " . print_r( $ddeliveryId, 1 ) );
 
 				return $orderId;
 			}
@@ -150,7 +149,7 @@ class Controller {
 		}
 
 		$logger->saveLog( "Sending order to DDelivery" );
-		$toSend = array(
+		$toSend = [
 			$sdkId,
 			$order->get_order_number(),
 			Helper::stringToNumber( $order->get_payment_method() ),
@@ -160,41 +159,35 @@ class Controller {
 			$order->get_billing_email(),
 			apply_filters( 'ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order ),
 			$order->post->post_excerpt
-		);
+		];
+
 		try {
-			$result = $business->onCmsChangeStatus( $toSend[0],
-			                                        $toSend[1],
-			                                        $toSend[2],
-			                                        $toSend[3],
-			                                        $toSend[4],
-			                                        $toSend[5],
-			                                        $toSend[6],
-			                                        $toSend[7],
-			                                        $toSend[8] );
+			$result = $business->onCmsChangeStatus( ...$toSend );
 		} catch ( \Exception $exception ) {
 			$logger->saveLog( "Exception in onCmsChangeStatus: {$exception->getMessage()}" );
-			$logger->saveLog( "Debug data: " . print_r( $toSend,
-			                                            1 ) );
+			$logger->saveLog( "Debug data: " . print_r( $toSend, 1 ) );
 
-			Helper::addUploadError( $exception->getMessage(),
-			                        $orderId );
+			$order->add_order_note( "Ошибка отправки заказа в DDelivery: {$exception->getMessage()" );
+			$order->add_meta_data( Core::ORDER_FIELD_HAS_UPDATE_ERRORS, 1, true );
+			$order->save();
+
+			Helper::addUploadError( $exception->getMessage(), $orderId );
 
 			return $orderId;
 		}
+
 		if ( $result === 0 ) {
 			$logger->saveLog( "Status '{$order->get_status()}' for send order doesnt match, stopping" );
 		} else if ( $result > 0 ) {
-			$logger->saveLog( "DDelivery order id : " . print_r( $result,
-			                                                     1 ) );
-			$order->add_meta_data( Core::ORDER_FIELD_DDELIVERY_ID,
-			                       (int) $result,
-			                       true );
+			$logger->saveLog( "DDelivery order id : " . print_r( $result, 1 ) );
+			$order->add_meta_data( Core::ORDER_FIELD_DDELIVERY_ID, (int) $result, true );
+			$order->remove_meta_data( Core::ORDER_FIELD_HAS_UPDATE_ERRORS );
+			$order->add_order_note('Заказ отправлен в DDelivery');
 			$order->save();
 
 			Helper::dropUploadErrors();
 		} else {
-			$logger->saveLog( "Unexpected result: " . print_r( $result,
-			                                                   1 ) );
+			$logger->saveLog( "Unexpected result: " . print_r( $result, 1 ) );
 		}
 
 		return $orderId;
@@ -237,10 +230,9 @@ class Controller {
 				unset( $session->{$field} );
 				$session->save_data();
 			}
-			$order->add_meta_data( Core::SESSION_FIELD_SDK_ID,
-			                       $sdkId,
-			                       true );
+			$order->add_meta_data( Core::SESSION_FIELD_SDK_ID, $sdkId, true );
 			$order->save();
+
 			$logger->saveLog( "Order $orderId has sdk id $sdkId" );
 		} catch ( \Exception $exception ) {
 			$logger->saveLog( "Exception in actionOrderCreate: {$exception->getMessage()}" );
@@ -249,18 +241,37 @@ class Controller {
 		}
 
 		$logger->saveLog( "Sending order to DDelivery" );
-		$result = $business->onCmsOrderFinish( $sdkId,
-		                                       $order->get_order_number(),
-		                                       Helper::stringToNumber( $order->get_payment_method() ),
-		                                       $order->get_status(),
-		                                       $order->get_formatted_billing_full_name(),
-		                                       $order->get_billing_phone(),
-		                                       $order->get_billing_email(),
-		                                       apply_filters( 'ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order ),
-		                                       $order->post->post_excerpt );
+		$toSend = [
+			$sdkId,
+			$order->get_order_number(),
+			Helper::stringToNumber( $order->get_payment_method() ),
+			$order->get_status(),
+			$order->get_formatted_billing_full_name(),
+			$order->get_billing_phone(),
+			$order->get_billing_email(),
+			apply_filters( 'ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order ),
+			$order->post->post_excerpt
+		];
+
+		try {
+			$result = $business->onCmsOrderFinish( ...$toSend );
+		} catch ( \Exception $exception ) {
+			$logger->saveLog( "Exception in onCmsOrderFinish: {$exception->getMessage()}" );
+			$logger->saveLog( "Debug data: " . print_r( $toSend, 1 ) );
+			$order->add_order_note( "Ошибка создания заказа в DDelivery: {$exception->getMessage()}" );
+			$order->add_meta_data( Core::ORDER_FIELD_HAS_CREATE_ERRORS, 1, true );
+
+			$order->save();
+
+			return $orderId;
+		}
+
 		if ( $result !== false ) {
-			$logger->saveLog( "DDelivery data: " . print_r( $result,
-			                                                1 ) );
+			$logger->saveLog( "DDelivery data: " . print_r( $result, 1 ) );
+			$order->remove_meta_data( Core::ORDER_FIELD_HAS_CREATE_ERRORS );
+			$order->add_order_note('Заказ создан в DDelivery');
+
+			$order->save();
 		} else {
 			$logger->saveLog( "DDelivery onCmsOrderFinish returned empty answer" );
 		}

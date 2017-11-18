@@ -15,6 +15,7 @@
         }
     },
     "require": {
+        "php": ">=5.6.0",
         "ddelivery/clientsdk": "^1.4"
     }
 }

@@ -12,6 +12,8 @@ class Core {
 	const SESSION_FIELD_SDK_ID = 'ddelivery_order_sdk_id';
 	const SESSION_FIELD_UPLOAD_ERRORS = 'ddelivery_sdk_errors';
 	const ORDER_FIELD_DDELIVERY_ID = 'ddelivery_order_id';
+	const ORDER_FIELD_HAS_CREATE_ERRORS = '_ddelivery_has_create_errors';
+	const ORDER_FIELD_HAS_UPDATE_ERRORS = '_ddelivery_has_update_errors';
 
 	public static function init() {
 		$instance = new self();
