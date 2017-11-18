@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author dmz9 <dmz9@yandex.ru>
  * @copyright 2017 http://ipolh.com
@@ -6,40 +7,44 @@
  */
 namespace WPWooCommerceDDelivery;
 
-class Controller {
-	public static function actionDDelivery() {
+class Controller
+{
+	public static function actionDDelivery()
+	{
 
 		$container = Helper::createContainer();
 		$container->getUi()
-				  ->render( $_REQUEST );
+			->render($_REQUEST);
 		die();
 	}
 
-	public static function actionSDKToken() {
+	public static function actionSDKToken()
+	{
 
-		$products = ( isset( $_POST ) && isset( $_POST['products'] ) )
+		$products = (isset($_POST) && isset($_POST['products']))
 			? $_POST['products']
 			: array();
-		$discount = ( isset( $_POST ) && isset( $_POST['discount'] ) )
+		$discount = (isset($_POST) && isset($_POST['discount']))
 			? $_POST['discount']
 			: array();
 
-		$container       = Helper::createContainer( array(
-														'form'     => $products,
-														'discount' => (float) $discount
-													) );
-		$business        = $container->getBusiness();
+		$container = Helper::createContainer(array(
+			'form' => $products,
+			'discount' => (float)$discount
+		));
+		$business = $container->getBusiness();
 		$cartAndDiscount = $container->getAdapter()
-									 ->getCartAndDiscount();
-		$token           = $business->renderModuleToken( $cartAndDiscount );
+			->getCartAndDiscount();
+		$token = $business->renderModuleToken($cartAndDiscount);
 
 		return array(
 			'url' => $container->getAdapter()
-							   ->getSdkServer() . 'delivery/' . $token . '/index.json'
+				->getSdkServer() . 'delivery/' . $token . '/index.json'
 		);
 	}
 
-	public static function actionUserCart() {
+	public static function actionUserCart()
+	{
 		return Helper::getCurrentCartProducts();
 	}
 
@@ -48,18 +53,19 @@ class Controller {
 	 *
 	 * @return array
 	 */
-	public static function actionSaveSDK() {
+	public static function actionSaveSDK()
+	{
 		$sdkId = $_POST['id'];
-		if ( empty( $sdkId ) ) {
-			return array( 'status' => 'fail' );
+		if (empty($sdkId)) {
+			return array('status' => 'fail');
 		}
 
-		$session           = WC()->session;
-		$field             = Core::SESSION_FIELD_SDK_ID;
+		$session = WC()->session;
+		$field = Core::SESSION_FIELD_SDK_ID;
 		$session->{$field} = $sdkId;
 		$session->save_data();
 
-		return array( 'status' => 'ok' );
+		return array('status' => 'ok');
 	}
 
 	/**
@@ -67,40 +73,46 @@ class Controller {
 	 *
 	 * @return array
 	 */
-	public static function actionSavePrice() {
+	public static function actionSavePrice()
+	{
 		$data = $_POST['data'];
-		if ( empty( $data ) ) {
-			return array( 'status' => 'fail' );
+		if (empty($data)) {
+			return array('status' => 'fail');
 		}
 
 		$price = $data['price'];
 
-		$wc      = WC();
+		$wc = WC();
 		$session = $wc->session;
-		$field   = Core::SESSION_FIELD_PRICE;
-		unset( $session->{$field} );
+		$field = Core::SESSION_FIELD_PRICE;
+		unset($session->{$field});
 		$session->{$field} = $price;
 		// hack to remove session key for ddelivery shipping package to force it recalculate instead of getting cached
 		// @stolen in class-wc-shipping.php@calculate_shipping_for_package()
 		// emulating case when recalculating is forced
-		$total = $session->get( 'shipping_method_counts', array());
-		foreach ( $total as $i => $whatever ) {
-			$session->set( 'shipping_for_package_' . $i,
-						   'fuck_you_woocommerce' );
+		$total = $session->get('shipping_method_counts', array());
+		foreach ($total as $i => $whatever) {
+			$session->set(
+				'shipping_for_package_' . $i,
+				'fuck_you_woocommerce'
+			);
 		}
 
 		$session->save_data();
 
-		return array( 'status' => 'ok' );
+		return array('status' => 'ok');
 	}
 
-	public static function actionDebug() {
-		$order = Helper::getOrder( $_POST['orderId'] );
+	public static function actionDebug()
+	{
+		$order = Helper::getOrder($_POST['orderId']);
 
-		$order->save();
+		self::_saveOrder( $order );
 
-		return die( print_r( $order,
-							 1 ) );
+		return die(print_r(
+			$order,
+			1
+		));
 	}
 
 	/**
@@ -110,84 +122,89 @@ class Controller {
 	 *
 	 * @return int
 	 */
-	public static function actionOrderUpdate( $orderId ) {
+	public static function actionOrderUpdate($orderId)
+	{
 		$logger = new WPLogStorage();
-		$logger->saveLog( " " );
+		$logger->saveLog(" ");
 
-		$orderId = (int) $orderId;
-		if ( empty( $orderId ) ) {
-			$logger->saveLog( "Order create stopped: empty orderId" );
+		$orderId = (int)$orderId;
+		if (empty($orderId)) {
+			$logger->saveLog("Order create stopped: empty orderId");
 
 			return $orderId;
 		}
 
-		$logger->saveLog( 'Order update hook ' . $orderId );
+		$logger->saveLog('Order update hook ' . $orderId);
 
 		$container = Helper::createContainer();
-		$business  = $container->getBusiness();
+		$business = $container->getBusiness();
 
 		try {
-			$order = Helper::getOrder( $orderId );
-			$sdkId = $order->get_meta( Core::SESSION_FIELD_SDK_ID );
-			if ( empty( $sdkId ) ) {
-				$logger->saveLog( "Empty sdk id, stopping" );
+			$order = Helper::getOrder($orderId);
+			$sdkId = $order->get_meta(Core::SESSION_FIELD_SDK_ID);
+			if (empty($sdkId)) {
+				$logger->saveLog("Empty sdk id, stopping");
 
 				return $orderId;
 			}
-			$logger->saveLog( "Order $orderId has sdk id $sdkId" );
-			$ddeliveryId = $order->get_meta( Core::ORDER_FIELD_DDELIVERY_ID, false );
+			$logger->saveLog("Order $orderId has sdk id $sdkId");
+			$ddeliveryId = $order->get_meta(Core::ORDER_FIELD_DDELIVERY_ID, false);
 
-			if ( $ddeliveryId !== false && ! empty( $ddeliveryId ) ) {
-				$logger->saveLog( "Order already uploaded, ddelivery id: " . print_r( $ddeliveryId, 1 ) );
+			if ($ddeliveryId !== false && !empty($ddeliveryId)) {
+				$logger->saveLog("Order already uploaded, ddelivery id: " . print_r($ddeliveryId, 1));
 
 				return $orderId;
 			}
-		} catch ( \Exception $exception ) {
-			$logger->saveLog( "Exception in actionOrderUpdate: {$exception->getMessage()}" );
+		} catch (\Exception $exception) {
+			$logger->saveLog("Exception in actionOrderUpdate: {$exception->getMessage()}");
 
 			return $orderId;
 		}
 
-		$logger->saveLog( "Sending order to DDelivery" );
+		$logger->saveLog("Sending order to DDelivery");
 		$toSend = [
 			$sdkId,
 			$order->get_order_number(),
-			Helper::stringToNumber( $order->get_payment_method() ),
+			Helper::stringToNumber($order->get_payment_method()),
 			$order->get_status(),
 			$order->get_formatted_billing_full_name(),
 			$order->get_billing_phone(),
 			$order->get_billing_email(),
-			apply_filters( 'ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order ),
+			apply_filters('ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order),
 			$order->post->post_excerpt
 		];
 
 		try {
-			$result = $business->onCmsChangeStatus( ...$toSend );
-		} catch ( \Exception $exception ) {
-			$logger->saveLog( "Exception in onCmsChangeStatus: {$exception->getMessage()}" );
-			$logger->saveLog( "Debug data: " . print_r( $toSend, 1 ) );
+			$result = $business->onCmsChangeStatus(...$toSend);
+		} catch (\Exception $exception) {
+			$logger->saveLog("Exception in onCmsChangeStatus: {$exception->getMessage()}");
+			$logger->saveLog("Debug data: " . print_r($toSend, 1));
 
-			$order->add_order_note( "Ошибка отправки заказа в DDelivery: {$exception->getMessage()}" );
-			$order->add_meta_data( Core::ORDER_FIELD_HAS_UPDATE_ERRORS, 1, true );
-			$order->save();
+			$message = wp_strip_all_tags($exception->getMessage());
+			$order->add_order_note("Ошибка отправки заказа в DDelivery: $message");
+			$order->add_meta_data(Core::ORDER_FIELD_HAS_UPDATE_ERRORS, 1, true);
+			self::_saveOrder( $order );
 
-			Helper::addUploadError( $exception->getMessage(), $orderId );
+			Helper::addUploadError($exception->getMessage(), $orderId);
 
 			return $orderId;
 		}
 
-		if ( $result === 0 ) {
-			$logger->saveLog( "Status '{$order->get_status()}' for send order doesnt match, stopping" );
-		} else if ( $result > 0 ) {
-			$logger->saveLog( "DDelivery order id : " . print_r( $result, 1 ) );
-			$order->add_meta_data( Core::ORDER_FIELD_DDELIVERY_ID, (int) $result, true );
-			$order->delete_meta_data( Core::ORDER_FIELD_HAS_UPDATE_ERRORS );
-			$order->add_order_note('Заказ отправлен в DDelivery');
-			$order->save();
+		if ($result === 0) {
+			$logger->saveLog("Status '{$order->get_status()}' for send order doesnt match, stopping");
+		} else if ($result > 0) {
+			$logger->saveLog("DDelivery order id : " . print_r($result, 1));
+			$order->add_meta_data(Core::ORDER_FIELD_DDELIVERY_ID, (int)$result, true);
+			$order->delete_meta_data(Core::ORDER_FIELD_HAS_UPDATE_ERRORS);
+			$order->add_order_note(
+				"Заказ отправлен в DDelivery: " .
+					"<a href=\"https://ddelivery.ru/cabinet/orders/${result}/view\">${result}</a>"
+			);
+			self::_saveOrder( $order );
 
 			Helper::dropUploadErrors();
 		} else {
-			$logger->saveLog( "Unexpected result: " . print_r( $result, 1 ) );
+			$logger->saveLog("Unexpected result: " . print_r($result, 1));
 		}
 
 		return $orderId;
@@ -200,82 +217,92 @@ class Controller {
 	 *
 	 * @return int
 	 */
-	public static function actionOrderCreate( $orderId ) {
+	public static function actionOrderCreate($orderId)
+	{
 		$logger = new WPLogStorage();
-		$logger->saveLog( " " );
+		$logger->saveLog(" ");
 
-		$orderId = (int) $orderId;
-		if ( empty( $orderId ) ) {
-			$logger->saveLog( "Order create stopped: empty orderId" );
+		$orderId = (int)$orderId;
+		if (empty($orderId)) {
+			$logger->saveLog("Order create stopped: empty orderId");
 
 			return $orderId;
 		}
 
-		$logger->saveLog( 'Order create hook ' . $orderId );
+		$logger->saveLog('Order create hook ' . $orderId);
 
 		$session = WC()->session;
 
 		$container = Helper::createContainer();
-		$business  = $container->getBusiness();
+		$business = $container->getBusiness();
 
 		try {
-			$order = Helper::getOrder( $orderId );
+			$order = Helper::getOrder($orderId);
 			$field = Core::SESSION_FIELD_SDK_ID;
-			$sdkId = $session->get( $field );
-			if ( empty( $sdkId ) ) {
-				$logger->saveLog( "SDK ID not found" );
+			$sdkId = $session->get($field);
+			if (empty($sdkId)) {
+				$logger->saveLog("SDK ID not found");
 
 				return $orderId;
 			} else {
-				unset( $session->{$field} );
+				unset($session->{$field});
 				$session->save_data();
 			}
-			$order->add_meta_data( Core::SESSION_FIELD_SDK_ID, $sdkId, true );
-			$order->save();
+			$order->add_meta_data(Core::SESSION_FIELD_SDK_ID, $sdkId, true);
+			self::_saveOrder( $order );
 
-			$logger->saveLog( "Order $orderId has sdk id $sdkId" );
-		} catch ( \Exception $exception ) {
-			$logger->saveLog( "Exception in actionOrderCreate: {$exception->getMessage()}" );
+			$logger->saveLog("Order $orderId has sdk id $sdkId");
+		} catch (\Exception $exception) {
+			$logger->saveLog("Exception in actionOrderCreate: {$exception->getMessage()}");
 
 			return $orderId;
 		}
 
-		$logger->saveLog( "Sending order to DDelivery" );
+		$logger->saveLog("Sending order to DDelivery");
 		$toSend = [
 			$sdkId,
 			$order->get_order_number(),
-			Helper::stringToNumber( $order->get_payment_method() ),
+			Helper::stringToNumber($order->get_payment_method()),
 			$order->get_status(),
 			$order->get_formatted_billing_full_name(),
 			$order->get_billing_phone(),
 			$order->get_billing_email(),
-			apply_filters( 'ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order ),
+			apply_filters('ddelivery_payment', $order->is_paid() ? 0 : $order->get_total(), $order),
 			$order->post->post_excerpt
 		];
 
 		try {
-			$result = $business->onCmsOrderFinish( ...$toSend );
-		} catch ( \Exception $exception ) {
-			$logger->saveLog( "Exception in onCmsOrderFinish: {$exception->getMessage()}" );
-			$logger->saveLog( "Debug data: " . print_r( $toSend, 1 ) );
-			$order->add_order_note( "Ошибка создания заказа в DDelivery: {$exception->getMessage()}" );
-			$order->add_meta_data( Core::ORDER_FIELD_HAS_CREATE_ERRORS, 1, true );
+			$result = $business->onCmsOrderFinish(...$toSend);
+		} catch (\Exception $exception) {
+			$logger->saveLog("Exception in onCmsOrderFinish: {$exception->getMessage()}");
+			$logger->saveLog("Debug data: " . print_r($toSend, 1));
 
-			$order->save();
+			$message = wp_strip_all_tags($exception->getMessage());
+			$order->add_order_note("Ошибка создания заказа в DDelivery: $message");
+			$order->add_meta_data(Core::ORDER_FIELD_HAS_CREATE_ERRORS, 1, true);
+
+			self::_saveOrder( $order );
 
 			return $orderId;
 		}
 
-		if ( $result !== false ) {
-			$logger->saveLog( "DDelivery data: " . print_r( $result, 1 ) );
-			$order->delete_meta_data( Core::ORDER_FIELD_HAS_CREATE_ERRORS );
+		if ($result !== false) {
+			$logger->saveLog("DDelivery data: " . print_r($result, 1));
+			$order->delete_meta_data(Core::ORDER_FIELD_HAS_CREATE_ERRORS);
 			$order->add_order_note('Заказ создан в DDelivery');
 
-			$order->save();
+			self::_saveOrder( $order );
 		} else {
-			$logger->saveLog( "DDelivery onCmsOrderFinish returned empty answer" );
+			$logger->saveLog("DDelivery onCmsOrderFinish returned empty answer");
 		}
 
 		return $orderId;
+	}
+
+	protected static function _saveOrder( $order ) {
+		// cmb2 deletes some metas. prevent it
+		add_filter('cmb2_override_meta_save', '__return_false', 10, 4);
+		add_filter('cmb2_override_meta_remove', '__return_false', 10, 4);
+		$order->save();
 	}
 }
