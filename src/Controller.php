@@ -181,7 +181,7 @@ class Controller {
 		} else if ( $result > 0 ) {
 			$logger->saveLog( "DDelivery order id : " . print_r( $result, 1 ) );
 			$order->add_meta_data( Core::ORDER_FIELD_DDELIVERY_ID, (int) $result, true );
-			$order->remove_meta_data( Core::ORDER_FIELD_HAS_UPDATE_ERRORS );
+			$order->delete_meta_data( Core::ORDER_FIELD_HAS_UPDATE_ERRORS );
 			$order->add_order_note('Заказ отправлен в DDelivery');
 			$order->save();
 
@@ -268,7 +268,7 @@ class Controller {
 
 		if ( $result !== false ) {
 			$logger->saveLog( "DDelivery data: " . print_r( $result, 1 ) );
-			$order->remove_meta_data( Core::ORDER_FIELD_HAS_CREATE_ERRORS );
+			$order->delete_meta_data( Core::ORDER_FIELD_HAS_CREATE_ERRORS );
 			$order->add_order_note('Заказ создан в DDelivery');
 
 			$order->save();
