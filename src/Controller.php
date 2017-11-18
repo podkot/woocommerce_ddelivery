@@ -167,7 +167,7 @@ class Controller {
 			$logger->saveLog( "Exception in onCmsChangeStatus: {$exception->getMessage()}" );
 			$logger->saveLog( "Debug data: " . print_r( $toSend, 1 ) );
 
-			$order->add_order_note( "Ошибка отправки заказа в DDelivery: {$exception->getMessage()" );
+			$order->add_order_note( "Ошибка отправки заказа в DDelivery: {$exception->getMessage()}" );
 			$order->add_meta_data( Core::ORDER_FIELD_HAS_UPDATE_ERRORS, 1, true );
 			$order->save();
 
