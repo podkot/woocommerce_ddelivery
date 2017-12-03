@@ -128,6 +128,7 @@ class Controller
 		$logger->saveLog(" ");
 
 		$orderId = (int)$orderId;
+
 		if (empty($orderId)) {
 			$logger->saveLog("Order create stopped: empty orderId");
 
@@ -141,22 +142,36 @@ class Controller
 
 		try {
 			$order = Helper::getOrder($orderId);
-			$sdkId = $order->get_meta(Core::SESSION_FIELD_SDK_ID);
-			if (empty($sdkId)) {
-				$logger->saveLog("Empty sdk id, stopping");
+
+			if ( !$order->has_shipping_method( DDeliveryShipping::DELIVERY_ID ) ) {
+				$logger->saveLog('DDelivery shipping method not found in order');
 
 				return $orderId;
 			}
+
+			$sdkId = $order->get_meta(Core::SESSION_FIELD_SDK_ID);
+
+			if (empty($sdkId)) {
+				$message = 'Empty sdk id, stopping';
+				$logger->saveLog($message);
+				self::_orderUpdateError( $order, $message );
+
+				return $orderId;
+			}
+
 			$logger->saveLog("Order $orderId has sdk id $sdkId");
 			$ddeliveryId = $order->get_meta(Core::ORDER_FIELD_DDELIVERY_ID, false);
 
 			if ($ddeliveryId !== false && !empty($ddeliveryId)) {
 				$logger->saveLog("Order already uploaded, ddelivery id: " . print_r($ddeliveryId, 1));
+				$order->add_order_note('Заказ уже был отправлен в DDelivery, повторая отправка пропущена');
 
 				return $orderId;
 			}
 		} catch (\Exception $exception) {
-			$logger->saveLog("Exception in actionOrderUpdate: {$exception->getMessage()}");
+			$message = wp_strip_all_tags($exception->getMessage());
+			$logger->saveLog("Exception in actionOrderUpdate: $message");
+			self::_orderUpdateError( $order, $message );
 
 			return $orderId;
 		}
@@ -196,10 +211,7 @@ class Controller
 				}
 			}
 
-			$order->add_order_note("Ошибка отправки заказа в DDelivery: $message");
-			$order->add_meta_data(Core::ORDER_FIELD_LAST_UPDATE_ERROR, $message, true);
-			self::_saveOrder( $order );
-
+			self::_orderUpdateError( $order, $message );
 			Helper::addUploadError($exception->getMessage(), $orderId);
 
 			return $orderId;
@@ -223,6 +235,12 @@ class Controller
 		}
 
 		return $orderId;
+	}
+
+	protected static function _orderUpdateError( $order, $message ) {
+		$order->add_order_note("Ошибка отправки заказа в DDelivery: $message");
+		$order->add_meta_data(Core::ORDER_FIELD_LAST_UPDATE_ERROR, $message, true);
+		self::_saveOrder( $order );
 	}
 
 	/**
@@ -253,22 +271,35 @@ class Controller
 
 		try {
 			$order = Helper::getOrder($orderId);
+
+			if ( !$order->has_shipping_method( DDeliveryShipping::DELIVERY_ID ) ) {
+				$logger->saveLog('DDelivery shipping method not found in order');
+
+				return $orderId;
+			}
+
 			$field = Core::SESSION_FIELD_SDK_ID;
 			$sdkId = $session->get($field);
+
 			if (empty($sdkId)) {
-				$logger->saveLog("SDK ID not found");
+				$message = 'SDK ID not found';
+				$logger->saveLog($message);
+				self::_orderCreateError( $order, $message );
 
 				return $orderId;
 			} else {
 				unset($session->{$field});
 				$session->save_data();
 			}
+
 			$order->add_meta_data(Core::SESSION_FIELD_SDK_ID, $sdkId, true);
 			self::_saveOrder( $order );
 
 			$logger->saveLog("Order $orderId has sdk id $sdkId");
 		} catch (\Exception $exception) {
-			$logger->saveLog("Exception in actionOrderCreate: {$exception->getMessage()}");
+			$message = wp_strip_all_tags($exception->getMessage());
+			$logger->saveLog("Exception in actionOrderCreate: $message");
+			self::_orderCreateError( $order, $message );
 
 			return $orderId;
 		}
@@ -293,10 +324,7 @@ class Controller
 			$logger->saveLog("Debug data: " . print_r($toSend, 1));
 
 			$message = wp_strip_all_tags($exception->getMessage());
-			$order->add_order_note("Ошибка создания заказа в DDelivery: $message");
-			$order->add_meta_data(Core::ORDER_FIELD_LAST_CREATE_ERROR, $message, true);
-
-			self::_saveOrder( $order );
+			self::_orderCreateError( $order, $message );
 
 			return $orderId;
 		}
@@ -313,6 +341,12 @@ class Controller
 		}
 
 		return $orderId;
+	}
+
+	protected static function _orderCreateError( $order, $message ) {
+		$order->add_order_note("Ошибка создания заказа в DDelivery: $message");
+		$order->add_meta_data(Core::ORDER_FIELD_LAST_CREATE_ERROR, $message, true);
+		self::_saveOrder( $order );
 	}
 
 	protected static function _saveOrder( $order ) {
