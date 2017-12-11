@@ -292,6 +292,12 @@ class Controller
 			if (empty($sdkId)) {
 				$message = 'SDK ID not found';
 				$logger->saveLog($message);
+				if (function_exists('getallheaders')) {
+					$logger->saveLog('HEADERS: ' , print_r(getallheaders(), 1));
+				}
+				$logger->saveLog('$_REQUEST: ' . print_r($_REQUEST, 1));
+				$logger->saveLog('$_SESSION: ' . print_r($_SESSION, 1));
+
 				self::_orderCreateError( $order, $message );
 
 				return $orderId;
