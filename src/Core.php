@@ -55,19 +55,27 @@ class Core {
 
 		add_action( 'woocommerce_checkout_order_processed', $createCallback, 10, 1 );
 
-		add_action( 'init', function() use( $updateCallback ) {
-			$statuses = Helper::createContainer()
-							->getAdapter()
-							->getCmsOrderStatusList();
-			$statuses = array_keys( $statuses );
-			foreach ( $statuses as $status ) {
-				$action = "woocommerce_order_status_$status";
-				add_action( $action,
-							$updateCallback,
-							10,
-							1 );
-			}
-		} );
+		$settingsStorage = new WPSettingsStorage();
+		$updateStatus = $settingsStorage->getParam(WPAdapter::PARAM_STATUS_LIST);
+
+		if ( $updateStatus ) {
+			add_action( "woocommerce_order_status_$updateStatus", $updateCallback, 10, 1 );
+		}
+		else {
+			add_action( 'init', function() use( $updateCallback ) {
+				$statuses = Helper::createContainer()
+								->getAdapter()
+								->getCmsOrderStatusList();
+				$statuses = array_keys( $statuses );
+				foreach ( $statuses as $status ) {
+					$action = "woocommerce_order_status_$status";
+					add_action( $action,
+								$updateCallback,
+								10,
+								1 );
+				}
+			} );
+		}
 
 		return true;
 	}
