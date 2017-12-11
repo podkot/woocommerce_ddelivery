@@ -295,13 +295,13 @@ class Controller
 				self::_orderCreateError( $order, $message );
 
 				return $orderId;
-			} else {
-				unset($session->{$field});
-				$session->save_data();
 			}
 
 			$order->add_meta_data(Core::SESSION_FIELD_SDK_ID, $sdkId, true);
 			self::_saveOrder( $order );
+
+			unset($session->{$field});
+			$session->save_data();
 
 			$logger->saveLog("Order $orderId has sdk id $sdkId");
 		} catch (\Exception $exception) {
