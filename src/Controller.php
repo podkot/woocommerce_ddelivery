@@ -278,6 +278,14 @@ class Controller
 				return $orderId;
 			}
 
+			$savedSdkId = $order->get_meta(Core::SESSION_FIELD_SDK_ID);
+
+			if ( $savedSdkId ) {
+				$logger->saveLog("SDK ID $savedSdkId already exists, doing nothing");
+
+				return $orderId;
+			}
+
 			$field = Core::SESSION_FIELD_SDK_ID;
 			$sdkId = $session->get($field);
 
