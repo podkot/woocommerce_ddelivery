@@ -55,8 +55,13 @@ class Controller
 	 */
 	public static function actionSaveSDK()
 	{
+		$logger = new WPLogStorage();
+		$logger->saveLog(" ");
+
 		$sdkId = $_POST['id'];
 		if (empty($sdkId)) {
+			$logger->saveLog('Received empty SDK ID');
+			$logger->saveLog('$_POST: ' . print_r($_POST, 1));
 			return array('status' => 'fail');
 		}
 
@@ -64,6 +69,7 @@ class Controller
 		$field = Core::SESSION_FIELD_SDK_ID;
 		$session->{$field} = $sdkId;
 		$session->save_data();
+		$logger->saveLog("Saved SDK ID $sdkId in session");
 
 		return array('status' => 'ok');
 	}
