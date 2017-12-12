@@ -231,7 +231,7 @@ class Controller
 			$order->delete_meta_data(Core::ORDER_FIELD_LAST_UPDATE_ERROR);
 			$order->add_order_note(
 				"Заказ отправлен в DDelivery: " .
-					"<a href=\"https://ddelivery.ru/cabinet/orders/${result}/view\">${result}</a>"
+					"<a target=\"_blank\" href=\"https://ddelivery.ru/cabinet/orders/${result}/view\">${result}</a>"
 			);
 			self::_saveOrder( $order );
 
